@@ -35,6 +35,7 @@
 - **灵活配置**：支持单独启用 User/Agent 记忆或同时启用
 - **类型隔离**：用户记忆和 Agent 记忆独立管理
 - **完整管理**：支持记忆的创建、查询、更新、删除
+- **智能抽取**：支持 LLM 自动从对话中提取记忆（可选）
 - **RESTful API**：完整的 REST API 接口
 
 ## 配置模式
@@ -58,6 +59,50 @@ ENABLE_AGENT_MEMORY=true
 ENABLE_USER_MEMORY=true
 ENABLE_AGENT_MEMORY=true
 ```
+
+## 自动抽取功能
+
+Z-Memory 支持智能自动抽取，包含以下特性：
+
+### 1. 参考现有记忆
+在抽取时自动获取现有记忆作为上下文，避免重复
+
+### 2. 智能去重
+自动识别完全相同的记忆并忽略
+
+### 3. 智能更新
+识别可以合并或更新的现有记忆并执行更新
+
+### 4. 自动分类
+自动为记忆分类（偏好、决策、事件等）并评估重要性
+
+### 使用示例
+
+**自动抽取（智能提取）**：
+```bash
+curl -X POST "http://localhost:8000/memory/user/user123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "用户今天告诉我他正在学习 Python 编程，并且打算以后从事 AI 开发工作。",
+    "auto_extract": true
+  }'
+```
+
+**响应**：
+```json
+{
+  "mode": "auto_extract",
+  "total_extracted": 3,
+  "inserted": 2,
+  "updated": 1,
+  "ignored": 0,
+  "memories": [...]
+}
+```
+
+详细说明请参考：
+- [自动抽取文档](docs/AUTO_EXTRACT.md) - 功能概述
+- [智能抽取详细说明](docs/SMART_EXTRACT.md) - 完整的工作流程和决策逻辑
 
 ## 快速开始
 
@@ -90,8 +135,13 @@ cp .env.both .env
 
 编辑 `.env`，填入你的 API Key：
 ```bash
-# 填入阿里云 DashScope API Key
+# 填入阿里云 DashScope API Key（用于 Embedding 和 LLM）
 DASHSCOPE_API_KEY=your-dashscope-api-key-here
+
+# 如果使用 OpenAI
+OPENAI_API_KEY=your-openai-api-key-here
+EMBEDDING_PROVIDER=openai
+LLM_PROVIDER=openai
 ```
 
 ### 4. 初始化数据库
@@ -164,25 +214,6 @@ curl -X POST "http://localhost:8000/memory/agent/agent001" \
 ### 查询记忆
 
 ```bash
-# 同时查询用户和Agent记忆
-curl -X POST "http://localhost:8000/memory/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "用户对什么感兴趣",
-    "user_id": "user123",
-    "agent_id": "agent001",
-    "top_k": 5
-  }'
-
-# 只查询用户记忆
-curl -X POST "http://localhost:8000/memory/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "用户的偏好是什么",
-    "user_id": "user123",
-    "top_k": 5
-  }'
-
 # 只查询Agent记忆
 curl -X POST "http://localhost:8000/memory/query" \
   -H "Content-Type: application/json" \
@@ -190,6 +221,40 @@ curl -X POST "http://localhost:8000/memory/query" \
     "query": "关于用户的洞察",
     "agent_id": "agent001",
     "top_k": 5
+  }'
+```
+
+### Agent 代理模式
+
+#### Auto 模式（自动抽取）
+
+```bash
+curl -X POST "http://localhost:8000/memory/agent/proxy/agent001" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "用户今天告诉我他正在学习 Python 编程，并且打算以后从事 AI 开发工作。他还提到他喜欢开源项目。",
+    "mode": "auto"
+  }'
+```
+
+#### Manual 模式（手动传入）
+
+```bash
+curl -X POST "http://localhost:8000/memory/agent/proxy/agent001" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "用户对话记录",
+    "mode": "manual",
+    "memories": [
+      {
+        "content": "用户正在学习 Python 编程",
+        "metadata": {"category": "preference", "importance": 4}
+      },
+      {
+        "content": "用户打算从事 AI 开发工作",
+        "metadata": {"category": "goal", "importance": 5}
+      }
+    ]
   }'
 ```
 
@@ -215,7 +280,9 @@ z-memory/
 │   ├── INSTALLATION.md    # 安装说明
 │   ├── CONFIGURATION.md   # 详细配置说明
 │   ├── DEVELOPMENT.md     # 开发规范
-│   └── API.md             # API 文档
+│   ├── API.md             # API 文档
+│   ├── AUTO_EXTRACT.md    # 自动抽取功能说明
+│   └── SMART_EXTRACT.md   # 智能抽取详细说明
 ├── tests/                 # 测试
 │   ├── conftest.py        # 测试配置
 │   └── test_api.py        # API 测试

@@ -46,7 +46,8 @@ Z-Memory API 使用模块化的路由设计，所有路由定义在 `app/api/rou
 ```python
 {
     "content": "记忆内容",
-    "metadata": {"key": "value"}  // 可选
+    "metadata": {"key": "value"},  // 可选
+    "auto_extract": false          // 是否自动抽取，默认 false
 }
 ```
 
@@ -72,15 +73,59 @@ Z-Memory API 使用模块化的路由设计，所有路由定义在 `app/api/rou
 }
 ```
 
+### AgentProxyRequest
+
+Agent 代理请求模型。
+
+```python
+{
+    "content": "输入内容（如对话记录）",
+    "mode": "auto|manual",       // 可选，不指定则使用配置
+    "memories": [                // manual 模式下使用
+        {
+            "content": "记忆内容",
+            "metadata": {"key": "value"}
+        }
+    ]
+}
+```
+
 ## 响应格式
 
 ### 存储记忆响应
 
+**直接存储模式**：
 ```json
 {
     "id": "user_user123_1234567890.123",
     "status": "success",
-    "created_at": "2026-01-09T11:00:00"
+    "created_at": "2026-01-09T11:00:00",
+    "mode": "direct"
+}
+```
+
+**自动抽取模式（智能去重和更新）**：
+```json
+{
+    "mode": "auto_extract",
+    "total_extracted": 3,
+    "inserted": 2,
+    "updated": 1,
+    "ignored": 0,
+    "memories": [
+        {
+            "id": "user_user123_1234567890.123",
+            "action": "insert",
+            "status": "success",
+            "created_at": "2026-01-09T11:00:00"
+        },
+        {
+            "id": "user_user123_0987654321.456",
+            "action": "update",
+            "status": "success",
+            "updated_at": "2026-01-09T11:01:00"
+        }
+    ]
 }
 ```
 
@@ -129,6 +174,16 @@ Z-Memory API 使用模块化的路由设计，所有路由定义在 `app/api/rou
     "metadata": {"key": "value"},
     "created_at": "2026-01-09T11:00:00",
     "updated_at": "2026-01-09T11:00:00"
+}
+```
+
+### 删除记忆响应
+
+```json
+{
+    "id": "user_user123_1234567890.123",
+    "status": "success",
+    "message": "Memory deleted successfully"
 }
 ```
 
