@@ -1,6 +1,5 @@
 from typing import List, Dict, Any, Optional
-from app.core.memory import Memory, UserMemory, AgentMemory
-from sqlalchemy import select
+from app.core.memory import UserMemory, AgentMemory
 
 class DecisionLayer:
     def __init__(self, user_memory: Optional[UserMemory] = None, 
@@ -36,8 +35,8 @@ class DecisionLayer:
         
         return results
 
-    async def _fuse_and_rank(self, query: str, user_memories: List[Memory], 
-                            agent_memories: List[Memory]) -> List[Dict[str, Any]]:
+    async def _fuse_and_rank(self, query: str, user_memories, 
+                            agent_memories) -> List[Dict[str, Any]]:
         fused = []
         
         for mem in user_memories:
@@ -45,7 +44,7 @@ class DecisionLayer:
                 "id": mem.id,
                 "content": mem.content,
                 "type": "user",
-                "metadata": mem.meta_info,
+                "metadata": mem.meta_info if hasattr(mem, 'meta_info') else mem.metadata,
                 "created_at": mem.created_at
             })
         
@@ -54,7 +53,7 @@ class DecisionLayer:
                 "id": mem.id,
                 "content": mem.content,
                 "type": "agent",
-                "metadata": mem.meta_info,
+                "metadata": mem.meta_info if hasattr(mem, 'meta_info') else mem.metadata,
                 "created_at": mem.created_at
             })
         

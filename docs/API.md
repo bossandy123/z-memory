@@ -100,11 +100,12 @@ Agent 代理请求模型。
     "id": "user_user123_1234567890.123",
     "status": "success",
     "created_at": "2026-01-09T11:00:00",
-    "mode": "direct"
+    "mode": "direct",
+    "layer": "event"
 }
 ```
 
-**自动抽取模式（智能去重和更新）**：
+**自动抽取模式（智能去重、更新和 Why-Log）**：
 ```json
 {
     "mode": "auto_extract",
@@ -112,16 +113,22 @@ Agent 代理请求模型。
     "inserted": 2,
     "updated": 1,
     "ignored": 0,
+    "profile_count": 1,
+    "event_count": 1,
     "memories": [
         {
             "id": "user_user123_1234567890.123",
             "action": "insert",
+            "layer": "profile",
+            "reason": "这是新的用户偏好信息",
             "status": "success",
             "created_at": "2026-01-09T11:00:00"
         },
         {
             "id": "user_user123_0987654321.456",
             "action": "update",
+            "layer": "event",
+            "reason": "新的信息更详细，补充了事件的背景",
             "status": "success",
             "updated_at": "2026-01-09T11:01:00"
         }

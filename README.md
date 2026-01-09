@@ -1,6 +1,6 @@
 # Z-Memory
 
-智能记忆管理系统，支持用户记忆、Agent记忆和智能决策层。
+智能记忆管理系统，支持用户记忆、Agent记忆、智能决策层和记忆分层管理。
 
 ## 架构设计
 
@@ -11,19 +11,23 @@
        │                   │
        └─────────┬─────────┘
                  │
-        ┌────────▼─────────┐
-        │  Decision Layer  │
-        └────────┬─────────┘
+         ┌────────▼─────────┐
+         │  Decision Layer  │
+         └────────┬─────────┘
                  │
-        ┌────────▼─────────┐
-        │   Memory Core    │
-        └────────┬─────────┘
+         ┌────────▼─────────┐
+         │   Memory Core    │
+         │                  │
+         │  ├── 分层管理    │
+         │  ├── 智能抽取    │
+         │  └── Why-Log     │
+         └────────┬─────────┘
                  │
         ┌─────────▼──────────┐
         │                    │
  ┌──────▼──────┐     ┌──────▼──────┐
  │ PostgreSQL  │     │   Qdrant    │
- │ (元数据存储) │     │ (向量搜索)   │
+ │ (记忆+日志) │     │ (向量搜索)   │
  └─────────────┘     └─────────────┘
 ```
 
@@ -35,7 +39,9 @@
 - **灵活配置**：支持单独启用 User/Agent 记忆或同时启用
 - **类型隔离**：用户记忆和 Agent 记忆独立管理
 - **完整管理**：支持记忆的创建、查询、更新、删除
-- **智能抽取**：支持 LLM 自动从对话中提取记忆（可选）
+- **智能抽取**：支持 LLM 自动从对话中提取记忆（包含去重和更新）
+- **记忆分层**：Profile 层（画像）+ Event 层（事件）清晰分离
+- **Why-Log**：自动记录操作原因，透明可追溯
 - **RESTful API**：完整的 REST API 接口
 
 ## 配置模式
@@ -60,49 +66,29 @@ ENABLE_USER_MEMORY=true
 ENABLE_AGENT_MEMORY=true
 ```
 
-## 自动抽取功能
+## 记忆分层
 
-Z-Memory 支持智能自动抽取，包含以下特性：
+### Profile 层（画像层）
+记录长期、稳定的信息：性格、能力、职业、学历、偏好等
 
-### 1. 参考现有记忆
-在抽取时自动获取现有记忆作为上下文，避免重复
+### Event 层（事件层）
+记录动态事件和行为：对话记录、日常行为、具体事件等
 
-### 2. 智能去重
-自动识别完全相同的记忆并忽略
+## Why-Log（操作日志）
 
-### 3. 智能更新
-识别可以合并或更新的现有记忆并执行更新
+在 Auto 模式下自动记录操作原因：
 
-### 4. 自动分类
-自动为记忆分类（偏好、决策、事件等）并评估重要性
+- **INSERT**: 插入新记忆的原因
+- **UPDATE**: 更新现有记忆的原因  
+- **IGNORE**: 忽略重复记忆的原因
 
-### 使用示例
+### 查询日志
 
-**自动抽取（智能提取）**：
 ```bash
-curl -X POST "http://localhost:8000/memory/user/user123" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "用户今天告诉我他正在学习 Python 编程，并且打算以后从事 AI 开发工作。",
-    "auto_extract": true
-  }'
+curl "http://localhost:8000/memory/{memory_id}/logs"
 ```
 
-**响应**：
-```json
-{
-  "mode": "auto_extract",
-  "total_extracted": 3,
-  "inserted": 2,
-  "updated": 1,
-  "ignored": 0,
-  "memories": [...]
-}
-```
-
-详细说明请参考：
-- [自动抽取文档](docs/AUTO_EXTRACT.md) - 功能概述
-- [智能抽取详细说明](docs/SMART_EXTRACT.md) - 完整的工作流程和决策逻辑
+详细说明请参考 [Why-Log 文档](docs/WHY_LOG.md)
 
 ## 快速开始
 
@@ -172,91 +158,83 @@ curl http://localhost:8000/config
 curl http://localhost:8000/config
 ```
 
-### 存储用户记忆（需启用 ENABLE_USER_MEMORY）
+### 存储用户记忆（指定记忆层）
 
 ```bash
 curl -X POST "http://localhost:8000/memory/user/user123" \
   -H "Content-Type: application/json" \
   -d '{
     "content": "用户喜欢学习编程，特别是Python",
-    "metadata": {"category": "preference", "source": "conversation"}
+    "metadata": {"category": "preference", "source": "conversation"},
+    "memory_layer": "profile",
+    "is_permanent": true
   }'
 ```
 
-### 更新用户记忆
+### 自动抽取（智能去重、更新和 Why-Log）
 
 ```bash
-curl -X PUT "http://localhost:8000/memory/user/user123/user_user123_1234567890.123" \
+curl -X POST "http://localhost:8000/memory/user/user123" \
   -H "Content-Type: application/json" \
   -d '{
-    "content": "用户更喜欢学习Python和Go语言",
-    "metadata": {"category": "preference", "updated": true}
+    "content": "用户今天告诉我他正在学习 Python 编程，并且打算以后从事 AI 开发工作。他还提到他喜欢开源项目，经常在 GitHub 上参与贡献。不过他昨天也说过他正在学习 Python。",
+    "auto_extract": true
   }'
 ```
 
-### 删除用户记忆
-
-```bash
-curl -X DELETE "http://localhost:8000/memory/user/user123/user_user123_1234567890.123"
+**响应示例**：
+```json
+{
+  "mode": "auto_extract",
+  "total_extracted": 2,
+  "inserted": 1,
+  "updated": 1,
+  "ignored": 1,
+  "profile_count": 1,
+  "event_count": 1,
+  "memories": [
+    {
+      "id": "user_user123_1234567890.123",
+      "action": "insert",
+      "layer": "profile",
+      "reason": "这是新的用户职业规划信息",
+      "status": "success"
+    },
+    {
+      "id": "user_user123_0987654321.456",
+      "action": "update",
+      "layer": "profile",
+      "reason": "新的信息更详细，补充了用户的职业背景",
+      "status": "success"
+    },
+    {
+      "id": "user_user123_5678901234.789",
+      "action": "ignore",
+      "layer": "profile",
+      "reason": "这条记忆与现有记忆完全相同，无需重复存储",
+      "status": "success"
+    }
+  ]
+}
 ```
 
-### 存储Agent记忆（需启用 ENABLE_AGENT_MEMORY）
+### 查询操作日志
 
 ```bash
-curl -X POST "http://localhost:8000/memory/agent/agent001" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "用户在第3次对话中提到了对AI的兴趣",
-    "metadata": {"category": "insight", "importance": "high"}
-  }'
+curl "http://localhost:8000/memory/user_user123_1234567890.123/logs"
 ```
 
-### 查询记忆
+### 查询分层记忆
 
 ```bash
-# 只查询Agent记忆
-curl -X POST "http://localhost:8000/memory/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "关于用户的洞察",
-    "agent_id": "agent001",
-    "top_k": 5
-  }'
+# 获取用户画像（Profile 层）
+curl "http://localhost:8000/memory/user/user123/profile"
+
+# 获取用户事件（Event 层）
+curl "http://localhost:8000/memory/user/user123/events?limit=50"
 ```
 
-### Agent 代理模式
-
-#### Auto 模式（自动抽取）
-
-```bash
-curl -X POST "http://localhost:8000/memory/agent/proxy/agent001" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "用户今天告诉我他正在学习 Python 编程，并且打算以后从事 AI 开发工作。他还提到他喜欢开源项目。",
-    "mode": "auto"
-  }'
-```
-
-#### Manual 模式（手动传入）
-
-```bash
-curl -X POST "http://localhost:8000/memory/agent/proxy/agent001" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "用户对话记录",
-    "mode": "manual",
-    "memories": [
-      {
-        "content": "用户正在学习 Python 编程",
-        "metadata": {"category": "preference", "importance": 4}
-      },
-      {
-        "content": "用户打算从事 AI 开发工作",
-        "metadata": {"category": "goal", "importance": 5}
-      }
-    ]
-  }'
-```
+更多 API 示例请参考 [API 文档](docs/API.md)
 
 ## 项目结构
 
@@ -266,10 +244,11 @@ z-memory/
 │   ├── main.py            # FastAPI 主入口
 │   ├── config.py          # 配置管理
 │   ├── core/              # 核心业务逻辑
-│   │   ├── memory.py      # 记忆管理
+│   │   ├── memory.py      # 记忆管理 + 日志记录
+│   │   ├── agent.py       # 记忆抽取
 │   │   └── decision.py    # 决策层
 │   ├── database/          # 数据库相关
-│   │   ├── models.py      # SQLAlchemy 模型
+│   │   ├── models.py      # SQLAlchemy 模型（包含 MemoryLog）
 │   │   └── vector_store.py # Qdrant 向量存储
 │   └── api/               # API 路由
 │       └── routes/
@@ -281,8 +260,10 @@ z-memory/
 │   ├── CONFIGURATION.md   # 详细配置说明
 │   ├── DEVELOPMENT.md     # 开发规范
 │   ├── API.md             # API 文档
-│   ├── AUTO_EXTRACT.md    # 自动抽取功能说明
-│   └── SMART_EXTRACT.md   # 智能抽取详细说明
+│   ├── AUTO_EXTRACT.md    # 自动抽取概述
+│   ├── SMART_EXTRACT.md   # 智能抽取详细说明
+│   ├── MEMORY_LAYERS.md   # 记忆分层说明
+│   └── SEPARATE_LAYERS.md  # 分表详细说明
 ├── tests/                 # 测试
 │   ├── conftest.py        # 测试配置
 │   └── test_api.py        # API 测试
@@ -321,7 +302,7 @@ pytest tests/ -v
 
 ### 目录说明
 
-- `app/core/` - 核心业务逻辑（记忆管理、决策层）
+- `app/core/` - 核心业务逻辑（记忆管理、抽取、决策层）
 - `app/database/` - 数据库相关（模型、向量存储）
 - `app/api/` - API 路由模块
 - `app/main.py` - FastAPI 应用入口
@@ -332,3 +313,7 @@ pytest tests/ -v
 - [配置说明](docs/CONFIGURATION.md)
 - [开发规范](docs/DEVELOPMENT.md)
 - [API 文档](docs/API.md)
+- [自动抽取概述](docs/AUTO_EXTRACT.md)
+- [智能抽取详细说明](docs/SMART_EXTRACT.md)
+- [记忆分层说明](docs/MEMORY_LAYERS.md)
+- [Why-Log 说明](docs/WHY_LOG.md)

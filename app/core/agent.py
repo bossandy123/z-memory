@@ -4,6 +4,7 @@ import dashscope
 from dashscope import Generation
 import json
 from app.config import settings
+from datetime import datetime
 
 class MemoryExtractor:
     """记忆抽取器，使用 LLM 从对话中抽取重要信息"""
@@ -31,7 +32,7 @@ class MemoryExtractor:
             existing_memories: 现有的记忆列表（用于去重和更新判断）
             
         Returns:
-            抽取到的记忆列表，每个记忆包含操作类型（insert/update/ignore）
+            抽取到的记忆列表，每个记忆包含操作类型和原因
         """
         prompt = self._build_extraction_prompt(content, existing_memories)
         
@@ -46,12 +47,18 @@ class MemoryExtractor:
             mem["metadata"]["source"] = "auto_extraction"
             mem["metadata"]["entity_id"] = entity_id
             
-            # 如果是 update 操作，需要从现有记忆中找到对应的 memory_id
-            if mem.get("action") == "update" and existing_memories:
+            # 添加记忆层信息
+            if "memory_layer" not in mem["metadata"]:
+                mem["memory_layer"] = "event"
+            
+            # 如果是 update 或 ignore 操作，需要从现有记忆中找到对应的 memory_id
+            if mem.get("action") in ["update", "ignore"] and existing_memories:
                 existing_content = mem.get("existing_content", "")
                 for existing in existing_memories:
                     if existing.get("content") == existing_content:
                         mem["memory_id"] = existing.get("id")
+                        # 保持原有的记忆层
+                        mem["memory_layer"] = existing.get("memory_layer", "event")
                         break
         
         return memories
@@ -72,23 +79,44 @@ class MemoryExtractor:
 {content}
 
 【抽取要求】：
-1. 识别重要信息：用户偏好、重要事件、关键决策、重要关系等
-2. 简洁描述：每条记忆用1-2句话清晰描述
-3. 分类标记：为每条记忆添加类型（preference/decision/event/relationship/other）
-4. 重要性评估：为每条记忆评分（1-5，5为最重要）
-5. **智能去重和更新**：
-   - 如果新抽取的记忆与现有记忆**完全相同**，标记 action 为 "ignore"
-   - 如果新抽取的记忆是现有记忆的**更新/扩展**，标记 action 为 "update"，并在 existing_content 字段中记录对应的现有记忆内容
-   - 如果新抽取的记忆是**全新的**，标记 action 为 "insert"
-6. 只抽取有长期保存价值的信息，忽略闲聊和临时对话
+1. **记忆分层**：为每条记忆判断应该存储在哪一层：
+   - `profile` 层：记录长期、稳定的信息，如性格、能力、职业、学历、偏好等静态或半静态信息
+   - `event` 层：记录动态事件和行为，如对话记录、日常行为、具体事件等
+
+2. 识别重要信息：
+   - profile 层：用户偏好、能力、职业、教育、性格特征等
+   - event 层：重要事件、对话内容、行为记录等
+
+3. 简洁描述：每条记忆用 1-2 句话清晰描述
+
+4. 分类标记：为每条记忆添加类型（preference/ability/career/education/personality/event/other）
+
+5. 重要性评估：为每条记忆评分（1-5，5为最重要）
+
+6. **智能去重和更新**：
+   - 如果新抽取的记忆与现有记忆**完全相同**：
+     * 标记 action 为 "ignore"
+     * 在 reason 字段中用自然语言说明原因（例如："这条记忆与现有记忆完全相同，无需重复存储"）
+   
+   - 如果新抽取的记忆是现有记忆的**更新/扩展**：
+     * 标记 action 为 "update"
+     * 在 existing_content 字段中记录对应的现有记忆内容
+     * 在 reason 字段中用自然语言说明为什么要更新（例如："新的信息更详细，包含了用户的职业背景"）
+   
+   - 如果新抽取的记忆是**全新的**：
+     * 标记 action 为 "insert"
+
+7. 只抽取有长期保存价值的信息，忽略闲聊和临时对话
 
 【输出格式】（JSON数组）：
 [
   {{
     "content": "记忆内容描述",
     "action": "insert|update|ignore",
+    "reason": "操作的自然语言原因说明",
     "existing_content": "要更新的现有记忆内容（仅 update 时需要）",
-    "memory_type": "preference|decision|event|relationship|other",
+    "memory_layer": "profile|event",
+    "memory_type": "preference|ability|career|education|personality|event|other",
     "importance": 1-5,
     "metadata": {{"additional_key": "value"}}
   }}
@@ -105,7 +133,9 @@ class MemoryExtractor:
         
         formatted = []
         for mem in memories:
-            formatted.append(f"- {mem.get('content', '')} (ID: {mem.get('id', 'N/A')})")
+            layer = mem.get("memory_layer", "event")
+            layer_tag = f"[{layer}]" if layer else ""
+            formatted.append(f"- {layer_tag} {mem.get('content', '')} (ID: {mem.get('id', 'N/A')})")
         
         return "\n".join(formatted)
     
@@ -157,7 +187,9 @@ class MemoryExtractor:
                     valid_memories.append({
                         "content": mem["content"],
                         "action": mem.get("action", "insert"),
+                        "reason": mem.get("reason", ""),
                         "existing_content": mem.get("existing_content", ""),
+                        "memory_layer": mem.get("memory_layer", "event"),
                         "metadata": {
                             "memory_type": mem.get("memory_type", "other"),
                             "importance": mem.get("importance", 3),

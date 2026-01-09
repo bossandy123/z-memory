@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # 阿里云 DashScope 配置（推荐）
     DASHSCOPE_API_KEY: str = ""
     DASHSCOPE_EMBEDDING_MODEL: str = "text-embedding-v2"
-    DASHSCOPE_EMBEDDING_DIM: int = 1536
+    DASHSCOPE_EMBEDDING_DIM: int = 1024
     DASHSCOPE_LLM_MODEL: str = "qwen-plus"
     
     # Embedding 提供商: "openai" 或 "dashscope"
