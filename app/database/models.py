@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, JSON, Text, Index, Boolean, ForeignKey
+from sqlalchemy import Column, String, DateTime, JSON, Text, Index, Boolean, ForeignKey, Float
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -51,20 +51,66 @@ class EventMemory(Base):
 class MemoryLog(Base):
     """记忆操作日志表：记录所有记忆操作的原因"""
     __tablename__ = "memory_logs"
-    
+
     id = Column(String, primary_key=True)
     memory_id = Column(String, nullable=False)
-    memory_layer = Column(String, nullable=False)  # 'profile' or 'event'
-    action = Column(String, nullable=False)  # 'update', 'ignore', 'insert', 'delete'
-    reason = Column(Text, nullable=False)  # 自然语言原因
+    memory_layer = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    reason = Column(Text, nullable=False)
     meta_info = Column("metadata", JSON, default={})
+    reward = Column(Float, nullable=True)
+    outcome = Column("outcome", JSON, default={})
+    evaluated_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     __table_args__ = (
         Index('idx_log_memory_id', 'memory_id'),
         Index('idx_log_layer', 'memory_layer'),
         Index('idx_log_action', 'action'),
         Index('idx_log_created_at', 'created_at'),
+        Index('idx_log_reward', 'reward'),
+        Index('idx_log_evaluated', 'evaluated_at'),
+    )
+
+class RLTrainingSample(Base):
+    """强化学习训练样本表：存储RL训练的数据"""
+    __tablename__ = "rl_training_samples"
+
+    id = Column(String, primary_key=True)
+    log_id = Column(String, ForeignKey('memory_logs.id'), nullable=False)
+    entity_id = Column(String, nullable=False)
+    entity_type = Column(String, nullable=False)
+
+    state = Column(JSON, nullable=False)
+    action = Column(String, nullable=False)
+    reward = Column(Float, nullable=False)
+    next_state = Column(JSON, nullable=True)
+    done = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index('idx_rl_log_id', 'log_id'),
+        Index('idx_rl_entity', 'entity_type', 'entity_id'),
+        Index('idx_rl_reward', 'reward'),
+        Index('idx_rl_created_at', 'created_at'),
+    )
+
+class RLModelCheckpoint(Base):
+    """强化学习模型检查点表：存储训练好的模型"""
+    __tablename__ = "rl_model_checkpoints"
+
+    id = Column(String, primary_key=True)
+    model_name = Column(String, nullable=False)
+    version = Column(String, nullable=False)
+    model_data = Column(JSON, nullable=False)
+    metrics = Column(JSON, default={})
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index('idx_rl_model_name', 'model_name'),
+        Index('idx_rl_model_version', 'version'),
     )
 
 async def init_db():

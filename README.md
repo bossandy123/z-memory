@@ -16,11 +16,12 @@
          └────────┬─────────┘
                  │
          ┌────────▼─────────┐
-         │   Memory Core    │
-         │                  │
-         │  ├── 分层管理    │
-         │  ├── 智能抽取    │
-         │  └── Why-Log     │
+          │  Memory Core    │
+          │                  │
+          │  ├── 分层管理    │
+          │  ├── 智能抽取    │
+          │  ├── Why-Log     │
+          │  └── RL 飞轮     │
          └────────┬─────────┘
                  │
         ┌─────────▼──────────┐
@@ -35,14 +36,15 @@
 
 - **双存储架构**：PostgreSQL 存储结构化数据 + Qdrant 存储向量嵌入
 - **语义搜索**：支持 OpenAI 或阿里云 DashScope 的高精度语义匹配
-- **智能融合**：决策层自动融合和排序多源记忆
-- **灵活配置**：支持单独启用 User/Agent 记忆或同时启用
-- **类型隔离**：用户记忆和 Agent 记忆独立管理
-- **完整管理**：支持记忆的创建、查询、更新、删除
-- **智能抽取**：支持 LLM 自动从对话中提取记忆（包含去重和更新）
-- **记忆分层**：Profile 层（画像）+ Event 层（事件）清晰分离
-- **Why-Log**：自动记录操作原因，透明可追溯
-- **RESTful API**：完整的 REST API 接口
+ - **智能融合**：决策层自动融合和排序多源记忆
+ - **灵活配置**：支持单独启用 User/Agent 记忆或同时启用
+ - **类型隔离**：用户记忆和 Agent 记忆独立管理
+ - **完整管理**：支持记忆的创建、查询、更新、删除
+ - **智能抽取**：支持 LLM 自动从对话中提取记忆（包含去重和更新）
+ - **记忆分层**：Profile 层（画像）+ Event 层（事件）清晰分离
+ - **Why-Log**：自动记录操作原因，透明可追溯
+ - **RL 飞轮**：基于 Why-Log 的强化学习机制，自动优化记忆抽取策略
+ - **RESTful API**：完整的 REST API 接口
 
 ## 配置模式
 
@@ -88,7 +90,36 @@ ENABLE_AGENT_MEMORY=true
 curl "http://localhost:8000/memory/{memory_id}/logs"
 ```
 
-详细说明请参考 [Why-Log 文档](docs/WHY_LOG.md)
+ 详细说明请参考 [Why-Log 文档](docs/WHY_LOG.md)
+
+## RL 飞轮（强化学习）
+
+ 基于 Why-Log 的自我优化机制，自动改进记忆抽取策略。
+
+### 启用 RL 飞轮
+
+```env
+ENABLE_RL_FLYWHEEL=true
+```
+
+### 运行训练流程
+
+```bash
+# 批量评估奖励
+curl -X POST "http://localhost:8000/rl/reward/evaluate" \
+  -H "Content-Type: application/json" \
+  -d '{"limit": 100, "days_threshold": 7}'
+
+# 训练模型
+curl -X POST "http://localhost:8000/rl/train" \
+  -H "Content-Type: application/json" \
+  -d '{"days": 30, "epochs": 10}'
+
+# 运行完整流程
+curl -X GET "http://localhost:8000/rl/pipeline/run?days=7&train=true"
+```
+
+详细说明请参考 [RL 飞轮文档](docs/RL_FLYWHEEL.md)
 
 ## 快速开始
 
@@ -238,44 +269,53 @@ curl "http://localhost:8000/memory/user/user123/events?limit=50"
 
 ## 项目结构
 
-```
-z-memory/
-├── app/                    # 应用主目录
-│   ├── main.py            # FastAPI 主入口
-│   ├── config.py          # 配置管理
-│   ├── core/              # 核心业务逻辑
-│   │   ├── memory.py      # 记忆管理 + 日志记录
-│   │   ├── agent.py       # 记忆抽取
-│   │   └── decision.py    # 决策层
-│   ├── database/          # 数据库相关
-│   │   ├── models.py      # SQLAlchemy 模型（包含 MemoryLog）
-│   │   └── vector_store.py # Qdrant 向量存储
-│   └── api/               # API 路由
-│       └── routes/
-│           ├── health.py  # 健康检查和配置
-│           ├── memory.py  # 记忆管理路由
-│           └── query.py   # 查询路由
-├── docs/                  # 文档
-│   ├── INSTALLATION.md    # 安装说明
-│   ├── CONFIGURATION.md   # 详细配置说明
-│   ├── DEVELOPMENT.md     # 开发规范
-│   ├── API.md             # API 文档
-│   ├── AUTO_EXTRACT.md    # 自动抽取概述
-│   ├── SMART_EXTRACT.md   # 智能抽取详细说明
-│   ├── MEMORY_LAYERS.md   # 记忆分层说明
-│   └── SEPARATE_LAYERS.md  # 分表详细说明
-├── tests/                 # 测试
-│   ├── conftest.py        # 测试配置
-│   └── test_api.py        # API 测试
-├── scripts/               # 脚本
-│   └── init_db.py         # 数据库初始化
-├── requirements.txt        # Python 依赖
-├── docker-compose.yml      # Docker 编排
-├── .env.example           # 环境变量示例
-├── .env.user_only         # 用户记忆模式配置
-├── .env.agent_only        # Agent 记忆模式配置
-└── .env.both              # 双模式配置
-```
+ ```
+ z-memory/
+ ├── app/                    # 应用主目录
+ │   ├── main.py            # FastAPI 主入口
+ │   ├── config.py          # 配置管理
+ │   ├── core/              # 核心业务逻辑（旧，待迁移）
+ │   ├── domain/            # 领域层（新）
+ │   ├── repositories/        # 数据访问层（新）
+ │   ├── services/           # 业务逻辑层（新）
+ │   ├── database/          # 数据库相关
+ │   │   ├── models.py      # SQLAlchemy 模型
+ │   │   └── vector_store.py # Qdrant 向量存储
+ │   └── api/               # API 路由模块
+ │       ├── routes/            # 路由
+ │       │   ├── health.py  # 健康检查和配置
+ │       │   ├── memory.py  # 记忆管理路由（已重构）
+ │       │   ├── query.py   # 查询路由
+ │       │   └── rl.py      # RL 飞轮路由
+ │       ├── schemas/         # API Schemas（待添加）
+ │       └── dependencies.py   # 依赖注入容器（新）
+ ├── docs/                  # 文档
+ │   ├── INSTALLATION.md    # 安装说明
+ │   ├── CONFIGURATION.md   # 详细配置说明
+ │   ├── DEVELOPMENT.md     # 开发规范
+ │   ├── API.md             # API 文档
+ │   ├── AUTO_EXTRACT.md    # 自动抽取概述
+ │   ├── SMART_EXTRACT.md   # 智能抽取详细说明
+ │   ├── MEMORY_LAYERS.md   # 记忆分层说明
+ │   ├── SEPARATE_LAYERS.md  # 分表详细说明
+ │   ├── WHY_LOG.md         # Why-Log 说明
+ │   ├── RL_FLYWHEEL.md     # RL 飞轮说明
+ │   └── ARCHITECTURE.md     # 架构设计（新）
+ │   ├── MIGRATION.md       # 重构迁移计划（新）
+ ├── tests/                 # 测试
+ │   ├── conftest.py        # 测试配置
+ │   ├── test_api.py        # API 测试
+ │   └── test_rl_flywheel.py # RL 飞轮测试
+ ├── scripts/               # 脚本
+ │   ├── init_db.py         # 数据库初始化
+ │   └── migrate_rl.py      # RL 飞轮迁移脚本
+ ├── requirements.txt        # Python 依赖
+ ├── docker-compose.yml      # Docker 编排
+ ├── .env.example           # 环境变量示例
+ ├── .env.user_only         # 用户记忆模式配置
+ ├── .env.agent_only        # Agent 记忆模式配置
+ └── .env.both              # 双模式配置
+ ```
 
 ## 技术栈
 
@@ -307,13 +347,15 @@ pytest tests/ -v
 - `app/api/` - API 路由模块
 - `app/main.py` - FastAPI 应用入口
 
-## 更多文档
+ ## 更多文档
 
-- [安装说明](docs/INSTALLATION.md)
-- [配置说明](docs/CONFIGURATION.md)
-- [开发规范](docs/DEVELOPMENT.md)
-- [API 文档](docs/API.md)
-- [自动抽取概述](docs/AUTO_EXTRACT.md)
-- [智能抽取详细说明](docs/SMART_EXTRACT.md)
-- [记忆分层说明](docs/MEMORY_LAYERS.md)
-- [Why-Log 说明](docs/WHY_LOG.md)
+ - [架构设计](docs/ARCHITECTURE.md)
+ - [安装说明](docs/INSTALLATION.md)
+ - [配置说明](docs/CONFIGURATION.md)
+ - [开发规范](docs/DEVELOPMENT.md)
+ - [API 文档](docs/API.md)
+ - [自动抽取概述](docs/AUTO_EXTRACT.md)
+ - [智能抽取详细说明](docs/SMART_EXTRACT.md)
+ - [记忆分层说明](docs/MEMORY_LAYERS.md)
+ - [Why-Log 说明](docs/WHY_LOG.md)
+ - [RL 飞轮说明](docs/RL_FLYWHEEL.md)

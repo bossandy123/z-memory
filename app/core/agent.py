@@ -6,6 +6,7 @@ import json
 from app.config import settings
 from datetime import datetime
 
+
 class MemoryExtractor:
     """记忆抽取器，使用 LLM 从对话中抽取重要信息"""
     
