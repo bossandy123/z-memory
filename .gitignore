@@ -16,3 +16,8 @@ app/__pycache__/
 app/core/__pycache__/
 app/database/__pycache__/
 app/api/__pycache__/
+
+node_modules/
+dist/
+build/
+*.log

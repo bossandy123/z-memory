@@ -123,6 +123,70 @@ async def get_training_samples(
     )
 
 
+@router.get("/model/checkpoints")
+async def get_model_checkpoints(
+    model_name: Optional[str] = None,
+    version: Optional[str] = None,
+    training_service=Depends(lambda: container.training_service)
+):
+    """
+    获取模型检查点列表
+    """
+    from sqlalchemy import select
+    from app.database.models import RLModelCheckpoint, async_session
+
+    async with async_session() as session:
+        query = select(RLModelCheckpoint)
+
+        if model_name:
+            query = query.where(RLModelCheckpoint.model_name == model_name)
+        if version:
+            query = query.where(RLModelCheckpoint.version == version)
+
+        query = query.order_by(RLModelCheckpoint.created_at.desc())
+        result = await session.execute(query)
+        checkpoints = result.scalars().all()
+
+        data = []
+        for checkpoint in checkpoints:
+            data.append({
+                "id": checkpoint.id,
+                "model_name": checkpoint.model_name,
+                "version": checkpoint.version,
+                "model_data": checkpoint.model_data,
+                "metrics": checkpoint.metrics,
+                "created_at": checkpoint.created_at.isoformat() if checkpoint.created_at else None,
+            })
+
+        return {"data": data, "total": len(data)}
+
+
+@router.get("/model/checkpoint/{checkpoint_id}/download")
+async def download_checkpoint(checkpoint_id: str):
+    """
+    下载检查点
+    """
+    from sqlalchemy import select
+    from app.database.models import RLModelCheckpoint, async_session
+    from fastapi.responses import JSONResponse
+
+    async with async_session() as session:
+        query = select(RLModelCheckpoint).where(RLModelCheckpoint.id == checkpoint_id)
+        result = await session.execute(query)
+        checkpoint = result.scalar_one_or_none()
+
+        if not checkpoint:
+            raise HTTPException(status_code=404, detail="Checkpoint not found")
+
+        return JSONResponse(content={
+            "id": checkpoint.id,
+            "model_name": checkpoint.model_name,
+            "version": checkpoint.version,
+            "model_data": checkpoint.model_data,
+            "metrics": checkpoint.metrics,
+        })
+
+
 @router.get("/model/statistics", response_model=ModelStatisticsResponse)
 async def get_model_statistics(
     days: int = 30,

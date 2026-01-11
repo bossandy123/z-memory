@@ -175,6 +175,43 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 访问 http://localhost:8000/docs 查看 API 文档
 
+## 前端 Dashboard
+
+本项目包含一个 Vue 3 + Element Plus 的前端 Dashboard，用于可视化管理 Why-Log 和 RL 机制数据。
+
+### 功能特性
+
+- **仪表盘**：查看系统统计摘要、Why-Log 统计、RL 模型统计
+- **Why-Log 管理**：查看记忆操作日志、筛选、详情查看、导出
+- **RL 训练样本**：查看强化学习训练样本、筛选
+- **RL 模型检查点**：管理 RL 模型、下载、开始训练
+
+### 快速开始
+
+```bash
+# 进入前端目录
+cd frontend
+
+# 安装依赖
+npm install
+
+# 配置后端 API 地址（可选，默认 http://localhost:8000）
+echo "VITE_API_URL=http://localhost:8000" > .env
+
+# 启动开发服务器
+npm run dev
+```
+
+访问 http://localhost:5173 查看 Dashboard
+
+### 前端技术栈
+
+- **框架**: Vue 3 + TypeScript
+- **构建工具**: Vite
+- **UI 库**: Element Plus
+- **HTTP 客户端**: Axios
+- **路由**: Vue Router 4
+
 ### 验证配置
 
 ```bash

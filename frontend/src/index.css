@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-blue-400: #58a6ff;
+  --color-blue-500: #1f6feb;
+  --color-green-400: #3fb950;
+  --color-green-500: #238636;
+  --color-yellow-400: #d29922;
+  --color-yellow-500: #9e6a03;
+  --color-red-400: #f85149;
+  --color-red-500: #da3633;
+  --color-gray-50: #f6f8fa;
+  --color-gray-100: #eaeef2;
+  --color-gray-200: #d0d7de;
+  --color-gray-300: #afb8c1;
+  --color-gray-400: #8b949e;
+  --color-gray-500: #6e7681;
+  --color-gray-600: #484f58;
+  --color-gray-700: #30363d;
+  --color-gray-800: #24292f;
+  --color-gray-850: #1f252c;
+  --color-gray-900: #0d1117;
+  --font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  --font-family-mono: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::selection {
+  background-color: rgba(88, 166, 255, 0.2);
+}
+
+.bg-gray-850 {
+  background-color: #1f252c;
+}
