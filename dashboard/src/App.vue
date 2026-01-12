@@ -23,7 +23,7 @@ const getIcon = (name: string) => {
 
 <template>
   <div class="min-h-screen bg-gray-900 flex">
-    <aside class="w-64 bg-gray-800 border-r border-gray-700 flex-shrink-0 flex flex-col">
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 shrink-0 flex flex-col">
       <div class="p-6 pb-4 border-b border-gray-700">
         <h1 class="text-xl font-mono text-blue-400 tracking-tight font-semibold">Z-Memory</h1>
         <p class="text-xs text-gray-500 mt-1 font-mono">Why-Log & RL Dashboard</p>
@@ -46,7 +46,7 @@ const getIcon = (name: string) => {
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0">
-      <header class="sticky top-0 z-40 px-8 py-4 bg-gray-800/50 backdrop-blur-md border-b border-gray-700 flex-shrink-0">
+      <header class="sticky top-0 z-40 px-8 py-4 bg-gray-800/50 backdrop-blur-md border-b border-gray-700 shrink-0">
         <h2 class="text-2xl font-mono text-gray-300 tracking-tight font-medium">
           {{ menuItems.find(i => i.path === route.path)?.title || 'Dashboard' }}
         </h2>

@@ -114,10 +114,6 @@ onMounted(() => loadLogs())
           placeholder="记忆 ID"
           class="pl-8 pr-3 py-1.5 w-40 bg-gray-800 border border-gray-700 text-sm text-gray-300 font-mono placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
         >
-        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
       </div>
 
       <select
