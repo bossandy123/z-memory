@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView, RouterLink, useRoute } from 'vue-router'
+import ThemeToggle from './components/ThemeToggle.vue'
 
 const route = useRoute()
 
@@ -22,37 +23,41 @@ const getIcon = (name: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 flex">
-    <aside class="w-64 bg-gray-800 border-r border-gray-700 shrink-0 flex flex-col">
-      <div class="p-6 pb-4 border-b border-gray-700">
+  <div class="min-h-screen flex" :style="{ backgroundColor: 'var(--bg-primary)' }">
+    <aside class="w-64 border-r shrink-0 flex flex-col" :style="{ backgroundColor: 'var(--sidebar-bg)', borderColor: 'var(--border-color)' }">
+      <div class="p-6 pb-4 border-b" :style="{ borderColor: 'var(--border-color)' }">
         <h1 class="text-xl font-mono text-blue-400 tracking-tight font-semibold">Z-Memory</h1>
-        <p class="text-xs text-gray-500 mt-1 font-mono">Why-Log & RL Dashboard</p>
+        <p class="text-xs mt-1 font-mono" :style="{ color: 'var(--text-muted)' }">Why-Log & RL Dashboard</p>
       </div>
       <nav class="flex-1 px-2 py-4">
         <RouterLink
           v-for="item in menuItems"
           :key="item.name"
           :to="item.path"
-          class="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-400 font-mono transition-all duration-150 mb-0.5 hover:bg-gray-700 hover:text-gray-300"
-          :class="{ 'bg-blue-500/10 text-blue-400 border border-blue-500/20': route.path === item.path }"
+          class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-mono transition-all duration-150 mb-0.5"
+          :style="{ color: 'var(--text-secondary)' }"
+          :class="{ 'bg-blue-500/10 text-blue-400 border border-blue-500/20': route.path === item.path, 'hover:bg-gray-700': route.path !== item.path }"
         >
-          <span v-html="getIcon(item.name)" class="w-4 h-4"></span>
+          <span v-html="getIcon(item.name)" class="w-4 h-4" :style="{ color: route.path === item.path ? '' : 'inherit' }"></span>
           <span>{{ item.title }}</span>
         </RouterLink>
       </nav>
-      <div class="p-4 border-t border-gray-700 text-xs text-gray-600 font-mono">
+      <div class="p-4 border-t text-xs font-mono" :style="{ borderColor: 'var(--border-color)', color: 'var(--text-muted)' }">
         <div>v1.0.0</div>
       </div>
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0">
-      <header class="sticky top-0 z-40 px-8 py-4 bg-gray-800/50 backdrop-blur-md border-b border-gray-700 shrink-0">
-        <h2 class="text-2xl font-mono text-gray-300 tracking-tight font-medium">
-          {{ menuItems.find(i => i.path === route.path)?.title || 'Dashboard' }}
-        </h2>
-        <div class="text-xs text-gray-500 font-mono mt-1">
-          /{{ route.path.replace(/^\//, '') || 'dashboard' }}
+      <header class="sticky top-0 z-40 px-8 py-4 backdrop-blur-md border-b shrink-0 flex items-center justify-between" :style="{ backgroundColor: 'var(--header-bg)', borderColor: 'var(--border-color)' }">
+        <div>
+          <h2 class="text-2xl font-mono tracking-tight font-medium" :style="{ color: 'var(--text-primary)' }">
+            {{ menuItems.find(i => i.path === route.path)?.title || 'Dashboard' }}
+          </h2>
+          <div class="text-xs font-mono mt-1" :style="{ color: 'var(--text-muted)' }">
+            /{{ route.path.replace(/^\//, '') || 'dashboard' }}
+          </div>
         </div>
+        <ThemeToggle />
       </header>
       <div class="flex-1 px-8 py-6 overflow-auto">
         <RouterView />

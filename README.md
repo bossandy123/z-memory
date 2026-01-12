@@ -177,7 +177,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ## 前端 Dashboard
 
-本项目包含一个 Vue 3 + Element Plus 的前端 Dashboard，用于可视化管理 Why-Log 和 RL 机制数据。
+本项目包含一个 Vue 3 + Tailwind CSS 的前端 Dashboard，用于可视化管理 Why-Log 和 RL 机制数据。
 
 ### 功能特性
 
@@ -185,6 +185,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 - **Why-Log 管理**：查看记忆操作日志、筛选、详情查看、导出
 - **RL 训练样本**：查看强化学习训练样本、筛选
 - **RL 模型检查点**：管理 RL 模型、下载、开始训练
+- **主题切换**：支持亮色/暗色主题自动切换和手动切换，自动检测系统偏好
 
 ### 快速开始
 
@@ -204,13 +205,30 @@ npm run dev
 
 访问 http://localhost:5173 查看 Dashboard
 
+### 主题切换
+
+Dashboard 支持亮色和暗色两种主题模式：
+
+- **自动检测**：首次访问时自动检测系统颜色偏好
+- **手动切换**：点击右上角主题按钮手动切换
+- **持久化存储**：主题偏好保存在浏览器 localStorage 中
+- **实时预览**：切换主题时所有页面元素实时更新
+
+主题切换功能使用 CSS 变量实现，包括：
+- 背景色（主背景、次要背景、第三背景）
+- 文本色（主文本、次要文本、淡化文本）
+- 边框色
+- 悬停背景色
+- 卡片背景色
+
 ### 前端技术栈
 
 - **框架**: Vue 3 + TypeScript
 - **构建工具**: Vite
-- **UI 库**: Element Plus
+- **UI 框架**: Tailwind CSS 4.0
 - **HTTP 客户端**: Axios
 - **路由**: Vue Router 4
+- **状态管理**: Vue 3 Composables
 
 ### 验证配置
 
@@ -348,6 +366,16 @@ curl "http://localhost:8000/memory/user/user123/events?limit=50"
  │   └── migrate_rl.py      # RL 飞轮迁移脚本
  ├── requirements.txt        # Python 依赖
  ├── docker-compose.yml      # Docker 编排
+ ├── dashboard/              # Vue 3 前端 Dashboard
+ │   ├── src/
+ │   │   ├── components/   # 组件（包含主题切换组件）
+ │   │   ├── composables/  # 组合式函数（useTheme）
+ │   │   ├── views/        # 页面视图
+ │   │   ├── api/          # API 接口
+ │   │   ├── router/       # 路由配置
+ │   │   ├── index.css     # Tailwind CSS 主题配置
+ │   │   └── main.ts       # 入口文件
+ │   └── package.json       # 依赖配置
  ├── .env.example           # 环境变量示例
  ├── .env.user_only         # 用户记忆模式配置
  ├── .env.agent_only        # Agent 记忆模式配置
@@ -356,12 +384,21 @@ curl "http://localhost:8000/memory/user/user123/events?limit=50"
 
 ## 技术栈
 
+### 后端
 - **API**: FastAPI
 - **数据库**: PostgreSQL 16 (异步连接)
 - **向量库**: Qdrant 1.7.0
 - **Embeddings**: 阿里云 DashScope text-embedding-v2 (支持 OpenAI 备选)
 - **ORM**: SQLAlchemy 2.0 (异步)
 - **测试**: Pytest
+
+### 前端
+- **框架**: Vue 3 + TypeScript
+- **构建工具**: Vite
+- **UI 框架**: Tailwind CSS 4.0
+- **HTTP 客户端**: Axios
+- **路由**: Vue Router 4
+- **状态管理**: Vue 3 Composables
 
 ## 运行测试
 

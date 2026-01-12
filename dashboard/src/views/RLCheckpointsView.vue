@@ -95,25 +95,29 @@ onMounted(() => loadCheckpoints())
       <input
         v-model="filterForm.model_name"
         placeholder="模型名称"
-        class="px-3 py-1.5 w-40 bg-gray-800 border border-gray-700 text-sm text-gray-300 font-mono placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+        class="px-3 py-1.5 w-40 text-sm font-mono focus:outline-none focus:border-blue-500/50"
+        :style="{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }"
       />
 
       <input
         v-model="filterForm.version"
         placeholder="版本"
-        class="px-3 py-1.5 w-32 bg-gray-800 border border-gray-700 text-sm text-gray-300 font-mono placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+        class="px-3 py-1.5 w-32 text-sm font-mono focus:outline-none focus:border-blue-500/50"
+        :style="{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }"
       />
 
       <button
         @click="loadCheckpoints"
-        class="px-3 py-1.5 border border-gray-700 bg-gray-800 text-gray-400 text-xs font-mono hover:bg-gray-700 hover:text-gray-300 transition-colors"
+        class="px-3 py-1.5 border text-xs font-mono transition-colors"
+        :style="{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }"
       >
         刷新
       </button>
 
       <button
         @click="handleSaveCheckpoint"
-        class="px-3 py-1.5 border border-gray-700 bg-gray-800 text-gray-400 text-xs font-mono hover:bg-gray-700 hover:text-gray-300 transition-colors"
+        class="px-3 py-1.5 border text-xs font-mono transition-colors"
+        :style="{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }"
       >
         保存检查点
       </button>
@@ -127,34 +131,37 @@ onMounted(() => loadCheckpoints())
     </div>
 
     <div class="mb-4">
-      <div class="bg-gray-800 border border-gray-700 overflow-hidden">
+      <div class="overflow-hidden" :style="{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }">
         <table class="w-full border-collapse">
           <thead>
-            <tr class="bg-gray-850">
-              <th class="px-3 py-2 text-left text-xs font-mono text-gray-500 border-b border-gray-700">检查点 ID</th>
-              <th class="px-3 py-2 text-left text-xs font-mono text-gray-500 border-b border-gray-700">模型名称</th>
-              <th class="px-3 py-2 text-left text-xs font-mono text-gray-500 border-b border-gray-700">版本</th>
-              <th class="px-3 py-2 text-left text-xs font-mono text-gray-500 border-b border-gray-700">指标</th>
-              <th class="px-3 py-2 text-left text-xs font-mono text-gray-500 border-b border-gray-700">创建时间</th>
-              <th class="px-3 py-2 text-left text-xs font-mono text-gray-500 border-b border-gray-700">操作</th>
+            <tr :style="{ backgroundColor: 'var(--bg-tertiary)' }">
+              <th class="px-3 py-2 text-left text-xs font-mono border-b" :style="{ color: 'var(--text-muted)', borderColor: 'var(--border-color)' }">检查点 ID</th>
+              <th class="px-3 py-2 text-left text-xs font-mono border-b" :style="{ color: 'var(--text-muted)', borderColor: 'var(--border-color)' }">模型名称</th>
+              <th class="px-3 py-2 text-left text-xs font-mono border-b" :style="{ color: 'var(--text-muted)', borderColor: 'var(--border-color)' }">版本</th>
+              <th class="px-3 py-2 text-left text-xs font-mono border-b" :style="{ color: 'var(--text-muted)', borderColor: 'var(--border-color)' }">指标</th>
+              <th class="px-3 py-2 text-left text-xs font-mono border-b" :style="{ color: 'var(--text-muted)', borderColor: 'var(--border-color)' }">创建时间</th>
+              <th class="px-3 py-2 text-left text-xs font-mono border-b" :style="{ color: 'var(--text-muted)', borderColor: 'var(--border-color)' }">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="checkpoint in checkpoints"
               :key="checkpoint.id"
-              class="transition-colors hover:bg-gray-700/50"
+              class="transition-colors"
+              :style="{ backgroundColor: 'transparent' }"
+              @mouseover="(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'"
+              @mouseout="(e) => e.currentTarget.style.backgroundColor = 'transparent'"
             >
-              <td class="px-3 py-2 text-xs text-gray-500 font-mono">{{ checkpoint.id.slice(0, 16) }}...</td>
-              <td class="px-3 py-2 text-sm text-gray-300 font-mono">{{ checkpoint.model_name }}</td>
-              <td class="px-3 py-2 text-sm text-gray-300 font-mono">{{ checkpoint.version }}</td>
-              <td class="px-3 py-2 text-sm text-gray-300 font-mono">
+              <td class="px-3 py-2 text-xs font-mono" :style="{ color: 'var(--text-muted)' }">{{ checkpoint.id.slice(0, 16) }}...</td>
+              <td class="px-3 py-2 text-sm font-mono" :style="{ color: 'var(--text-primary)' }">{{ checkpoint.model_name }}</td>
+              <td class="px-3 py-2 text-sm font-mono" :style="{ color: 'var(--text-primary)' }">{{ checkpoint.version }}</td>
+              <td class="px-3 py-2 text-sm font-mono" :style="{ color: 'var(--text-primary)' }">
                 <span v-if="hasMetrics(checkpoint.metrics)">
                   {{ Object.keys(checkpoint.metrics).length }} 个指标
                 </span>
-                <span v-else class="text-gray-600">无</span>
+                <span v-else :style="{ color: 'var(--text-muted)' }">无</span>
               </td>
-              <td class="px-3 py-2 text-xs text-gray-500 font-mono">
+              <td class="px-3 py-2 text-xs font-mono" :style="{ color: 'var(--text-muted)' }">
                 {{ new Date(checkpoint.created_at).toLocaleString() }}
               </td>
               <td class="px-3 py-2">
@@ -167,7 +174,7 @@ onMounted(() => loadCheckpoints())
               </td>
             </tr>
             <tr v-if="checkpoints.length === 0">
-              <td colspan="6" class="px-3 py-8 text-center text-gray-600 text-xs font-mono">
+              <td colspan="6" class="px-3 py-8 text-center text-xs font-mono" :style="{ color: 'var(--text-muted)' }">
                 暂无数据
               </td>
             </tr>
@@ -180,7 +187,8 @@ onMounted(() => loadCheckpoints())
       <select
         v-model="pageSize"
         @change="loadCheckpoints"
-        class="px-2 py-1 bg-gray-800 border border-gray-700 text-xs text-gray-400 font-mono focus:outline-none focus:border-blue-500/50"
+        class="px-2 py-1 text-xs font-mono focus:outline-none focus:border-blue-500/50"
+        :style="{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }"
       >
         <option :value="10">10/页</option>
         <option :value="20">20/页</option>
@@ -188,45 +196,48 @@ onMounted(() => loadCheckpoints())
       </select>
     </div>
 
-    <div v-if="trainDialogVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm">
-      <div class="bg-gray-800 border border-gray-700 max-w-sm w-full mx-4 overflow-hidden">
-        <div class="px-4 py-3 border-b border-gray-700">
-          <h3 class="text-sm font-mono text-gray-300">开始训练</h3>
+    <div v-if="trainDialogVisible" class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" :style="{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }">
+      <div class="max-w-sm w-full mx-4 overflow-hidden" :style="{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)' }">
+        <div class="px-4 py-3" :style="{ borderBottom: '1px solid var(--border-color)' }">
+          <h3 class="text-sm font-mono" :style="{ color: 'var(--text-primary)' }">开始训练</h3>
         </div>
         <div class="p-4 space-y-3">
           <div>
-            <label class="block text-xs text-gray-500 font-mono mb-1">数据天数</label>
+            <label class="block text-xs font-mono mb-1" :style="{ color: 'var(--text-muted)' }">数据天数</label>
             <input
               v-model="trainForm.days"
               type="number"
               :min="1"
               :max="365"
-              class="w-full px-3 py-1.5 bg-gray-900 border border-gray-700 text-sm text-gray-300 font-mono focus:outline-none focus:border-blue-500/50"
+              class="w-full px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-blue-500/50"
+              :style="{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }"
             >
           </div>
           <div>
-            <label class="block text-xs text-gray-500 font-mono mb-1">训练轮数</label>
+            <label class="block text-xs font-mono mb-1" :style="{ color: 'var(--text-muted)' }">训练轮数</label>
             <input
               v-model="trainForm.epochs"
               type="number"
               :min="1"
               :max="100"
-              class="w-full px-3 py-1.5 bg-gray-900 border border-gray-700 text-sm text-gray-300 font-mono focus:outline-none focus:border-blue-500/50"
+              class="w-full px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-blue-500/50"
+              :style="{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }"
             >
           </div>
           <div class="flex items-center gap-2">
-            <label class="text-xs text-gray-500 font-mono">保存检查点</label>
+            <label class="text-xs font-mono" :style="{ color: 'var(--text-muted)' }">保存检查点</label>
             <input
               v-model="trainForm.save_checkpoint"
               type="checkbox"
-              class="w-4 h-4 rounded border-gray-700 bg-gray-900 text-blue-500 focus:ring-2 focus:ring-blue-500/50"
+              class="w-4 h-4 rounded text-blue-500 focus:ring-2 focus:ring-blue-500/50"
             >
           </div>
         </div>
-        <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
+        <div class="px-4 py-3 flex justify-end gap-2" :style="{ borderTop: '1px solid var(--border-color)' }">
           <button
             @click="trainDialogVisible = false"
-            class="px-3 py-1.5 border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono hover:bg-gray-800 hover:text-gray-300 transition-colors"
+            class="px-3 py-1.5 border text-xs font-mono transition-colors"
+            :style="{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }"
           >
             取消
           </button>
