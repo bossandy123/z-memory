@@ -190,7 +190,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ```bash
 # 进入前端目录
-cd frontend
+cd dashboard
 
 # 安装依赖
 npm install
