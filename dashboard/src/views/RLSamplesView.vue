@@ -127,8 +127,8 @@ onMounted(() => loadSamples())
               :key="sample.id"
               class="transition-colors"
               :style="{ backgroundColor: 'transparent' }"
-              @mouseover="(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'"
-              @mouseout="(e) => e.currentTarget.style.backgroundColor = 'transparent'"
+              @mouseover="(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--hover-bg)'"
+              @mouseout="(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'"
             >
               <td class="px-3 py-2 text-xs font-mono" :style="{ color: 'var(--text-muted)' }">{{ sample.id.slice(0, 12) }}...</td>
               <td class="px-3 py-2">

@@ -189,8 +189,8 @@ onMounted(() => loadLogs())
               @click="showDetail(log)"
               class="cursor-pointer transition-colors"
               :style="{ backgroundColor: 'transparent' }"
-              @mouseover="(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'"
-              @mouseout="(e) => e.currentTarget.style.backgroundColor = 'transparent'"
+              @mouseover="(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--hover-bg)'"
+              @mouseout="(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'"
             >
               <td class="px-3 py-2 text-xs font-mono" :style="{ color: 'var(--text-muted)' }">{{ log.id.slice(0, 8) }}...</td>
               <td class="px-3 py-2">

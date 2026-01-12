@@ -149,8 +149,8 @@ onMounted(() => loadCheckpoints())
               :key="checkpoint.id"
               class="transition-colors"
               :style="{ backgroundColor: 'transparent' }"
-              @mouseover="(e) => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'"
-              @mouseout="(e) => e.currentTarget.style.backgroundColor = 'transparent'"
+              @mouseover="(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--hover-bg)'"
+              @mouseout="(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'"
             >
               <td class="px-3 py-2 text-xs font-mono" :style="{ color: 'var(--text-muted)' }">{{ checkpoint.id.slice(0, 16) }}...</td>
               <td class="px-3 py-2 text-sm font-mono" :style="{ color: 'var(--text-primary)' }">{{ checkpoint.model_name }}</td>
